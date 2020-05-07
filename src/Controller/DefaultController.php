@@ -4,8 +4,9 @@
 namespace App\Controller;
 
 
+use App\Entity\Article;
+use App\Entity\Category;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
 class DefaultController extends AbstractController
@@ -15,7 +16,16 @@ class DefaultController extends AbstractController
      */
     public function home()
     {
-        return $this->render('default/home.html.twig');
+
+        # Récupération de tous les articles
+        $articles = $this->getDoctrine()
+            ->getRepository(Article::class)
+            ->findAll();
+
+        # Transmission à la vue
+        return $this->render('default/home.html.twig', [
+            'articles' => $articles
+        ]);
     }
 
     /**
@@ -24,17 +34,42 @@ class DefaultController extends AbstractController
      */
     public function category($alias)
     {
-        return $this->render('default/category.html.twig');
+        # Récupération de la catégorie via son alias
+        $category = $this->getDoctrine()
+            ->getRepository(Category::class)
+            ->findOneBy(['alias' => $alias]);
+
+        /*
+         * Grâce à la relation entre Article et Categorie
+         * (OneToMany), je suis en mesure de récupérer
+         * les articles de la catégorie...
+         */
+        $articles = $category->getArticles();
+
+        # Transmission à la vue
+        return $this->render('default/category.html.twig', [
+            'articles' => $articles,
+            'category' => $category
+        ]);
     }
 
     /**
      * Afficher un Article
      * @Route("/{category}/{alias}_{id}.html", name="default_article", methods={"GET"})
      */
-    public function article($alias, $id, $category)
+    public function article(Article $article)
     {
         # Exemple URL :
         # http://localhost:8000/politique/le-deconfinement-est-annule_14564.html
-        return $this->render('default/article.html.twig');
+
+        # Récupération de l'article
+        #$article = $this->getDoctrine()
+        #    ->getRepository(Article::class)
+        #    ->find($id);
+
+        # Transmission à la vue
+        return $this->render('default/article.html.twig', [
+            'article' => $article
+        ]);
     }
 }
