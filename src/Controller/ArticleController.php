@@ -7,7 +7,13 @@ namespace App\Controller;
 use App\Entity\Article;
 use App\Entity\Category;
 use App\Entity\User;
+use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\Form\Extension\Core\Type\FileType;
+use Symfony\Component\Form\Extension\Core\Type\SubmitType;
+use Symfony\Component\Form\Extension\Core\Type\TextareaType;
+use Symfony\Component\Form\Extension\Core\Type\TextType;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
@@ -68,10 +74,81 @@ class ArticleController extends AbstractController
      * @Route("/rediger-un-article.html",
      *     name="article_new",
      *     methods={"GET|POST"})
+     * @param Request $request
      * @return Response
+     * @throws \Exception
      */
-    public function addArticle()
+    public function addArticle(Request $request)
     {
-        return new Response("<h1>PAGE REDIGER UN ARTICLE</h1>");
+        # Création d'un nouvel article
+        $article = new Article();
+
+        # Je récupère un user dans la base
+        # TODO : Récupérer le user en session
+        $auteur = $this->getDoctrine()
+            ->getRepository(User::class)
+            ->find(1);
+
+        $article->setUser($auteur);
+        $article->setCreatedDate(new \DateTimeImmutable());
+
+        # Création du Formulaire
+        $form = $this->createFormBuilder($article)
+            # Titre
+            ->add('title', TextType::class, [
+                'required' => true,
+                'label' => false,
+                'attr' => [
+                    'placeholder' => "Titre de l'Article..."
+                ]
+            ])
+            # Categorie
+            ->add('category', EntityType::class, [
+                'class' => Category::class,
+                'choice_label' => 'name',
+                'label' => false,
+            ])
+            # Contenu
+            ->add('content', TextareaType::class, [
+                'label' => false,
+                'required' => false,
+            ])
+            # Image d'illustration
+            ->add('image', FileType::class, [
+                'label' => false,
+                'attr' => [
+                    'class' => 'dropify'
+                ]
+            ])
+            # Bouton Submit
+            ->add('submit', SubmitType::class, [
+                'label' => 'Publier mon Article'
+            ])
+            ->getForm();
+
+        # Permet a SF de gérer les données reçues.
+        $form->handleRequest($request);
+
+        # Si le formulaire est soumis et que les informations sont valides
+        if ($form->isSubmitted() && $form->isValid()) {
+
+            # FIXME : Temporaire
+            $article->setImage('test.jpg');
+            $article->setAlias('ceci-est-un-alias-de-test');
+
+            # Sauvegarde en BDD
+            $em = $this->getDoctrine()->getManager();
+            $em->persist($article);
+            $em->flush();
+
+            # TODO : Notification
+            # TODO : Redirection
+
+        }
+
+        # On passe le formulaire à la vue
+        return $this->render('article/form.html.twig', [
+            'form' => $form->createView()
+        ]);
     }
 }

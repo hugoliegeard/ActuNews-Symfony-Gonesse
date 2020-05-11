@@ -72,4 +72,20 @@ class DefaultController extends AbstractController
             'article' => $article
         ]);
     }
+
+    /**
+     * Générer le Menu Principal
+     */
+    public function navigation()
+    {
+        # Récupération des catégories
+        $categories = $this->getDoctrine()
+            ->getRepository(Category::class)
+            ->findAll();
+
+        # Transmission au Menu
+        return $this->render('components/_nav.html.twig', [
+            'categories' => $categories
+        ]);
+    }
 }
