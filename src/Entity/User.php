@@ -6,9 +6,16 @@ use App\Repository\UserRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
+use Symfony\Component\Validator\Constraints as Assert;
 
 /**
  * @ORM\Entity(repositoryClass=UserRepository::class)
+ * @UniqueEntity(
+ *     fields={"email"},
+ *     errorPath="email",
+ *     message="Ce compte existe déjà !"
+ * )
  */
 class User
 {
@@ -21,21 +28,28 @@ class User
 
     /**
      * @ORM\Column(type="string", length=80)
+     * @Assert\NotBlank(message="N'oubliez pas de saisir votre prénom")
+     * @Assert\Length(max="80", maxMessage="Attention, pas plus de {{ limit }} caractères.")
      */
     private $firstname;
 
     /**
      * @ORM\Column(type="string", length=80)
+     * @Assert\NotBlank(message="N'oubliez pas de saisir votre nom")
+     * @Assert\Length(max="80", maxMessage="Attention, pas plus de {{ limit }} caractères.")
      */
     private $lastname;
 
     /**
      * @ORM\Column(type="string", length=80)
+     * @Assert\NotBlank(message="N'oubliez pas de saisir votre email")
+     * @Assert\Length(max="80", maxMessage="Attention, pas plus de {{ limit }} caractères.")
      */
     private $email;
 
     /**
      * @ORM\Column(type="string", length=255)
+     * @Assert\NotBlank(message="N'oubliez pas de saisir votre mot de passe")
      */
     private $password;
 

@@ -13,12 +13,17 @@ use Symfony\Component\Form\Extension\Core\Type\FileType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
+use Symfony\Component\HttpFoundation\File\Exception\FileException;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
 class ArticleController extends AbstractController
 {
+
+    # Chargement du Helper Trait
+    use HelperTrait;
 
     /**
      * Démonstration de l'ajout d'un Article
@@ -132,18 +137,60 @@ class ArticleController extends AbstractController
         # Si le formulaire est soumis et que les informations sont valides
         if ($form->isSubmitted() && $form->isValid()) {
 
-            # FIXME : Temporaire
-            $article->setImage('test.jpg');
-            $article->setAlias('ceci-est-un-alias-de-test');
+            # Upload de l'image
+            # TODO : Mettre en place l'upload de l'image en s'appuyant sur la doc.
+            # https://symfony.com/doc/current/controller/upload_file.html
+
+            /** @var UploadedFile $imageFile */
+            $imageFile = $form->get('image')->getData();
+
+            // this condition is needed because the 'brochure' field is not required
+            // so the PDF file must be processed only when a file is uploaded
+            if ($imageFile) {
+                $originalFilename = pathinfo($imageFile->getClientOriginalName(), PATHINFO_FILENAME);
+                // this is needed to safely include the file name as part of the URL
+                $safeFilename = $this->slugify($originalFilename);
+                $newFilename = $safeFilename.'-'.uniqid().'.'.$imageFile->guessExtension();
+
+                // Move the file to the directory where brochures are stored
+                try {
+                    $imageFile->move(
+                        $this->getParameter('images_directory'),
+                        $newFilename
+                    );
+                } catch (FileException $e) {
+                    // ... handle exception if something happens during file upload
+                }
+
+                // updates the 'brochureFilename' property to store the PDF file name
+                // instead of its contents
+                $article->setImage($newFilename);
+            }
+
+            # -------------------------------- FIN UPLOAD
+
+            # Création de l'Alias de l'Article
+            $article->setAlias(
+                $this->slugify(
+                    $article->getTitle()
+                )
+            );
 
             # Sauvegarde en BDD
             $em = $this->getDoctrine()->getManager();
             $em->persist($article);
             $em->flush();
 
-            # TODO : Notification
-            # TODO : Redirection
+            # Notification
+            $this->addFlash('notice',
+                'Félicitation, votre article est en ligne !');
 
+            # Redirection
+            return $this->redirectToRoute('default_article', [
+                'category' => $article->getCategory()->getAlias(),
+                'alias' => $article->getAlias(),
+                'id' => $article->getId()
+            ]);
         }
 
         # On passe le formulaire à la vue

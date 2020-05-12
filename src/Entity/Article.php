@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use App\Repository\ArticleRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 
 /**
  * @ORM\Entity(repositoryClass=ArticleRepository::class)
@@ -19,6 +20,7 @@ class Article
 
     /**
      * @ORM\Column(type="string", length=255)
+     * @Assert\NotBlank(message="Vous avez oublié le titre.")
      */
     private $title;
 
@@ -29,11 +31,16 @@ class Article
 
     /**
      * @ORM\Column(type="text")
+     * @Assert\NotBlank(message="Vous avez oublier votre contenu.")
      */
     private $content;
 
     /**
      * @ORM\Column(type="string", length=255)
+     * @Assert\Image(
+     *     mimeTypesMessage="Vérifiez le format de votre image.",
+     *     maxSize="2M", maxSizeMessage="Votre image est trop lourde. 2M Maximum."
+     * )
      */
     private $image;
 
