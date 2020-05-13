@@ -1,0 +1,44 @@
+{% extends "base.html.twig" %}
+
+{% block title %}
+    Messages
+{% endblock %}
+
+{% block content %}
+    <div class="p-3 mx-auto text-center">
+        <h1 class="display-4">
+            Gestion des messages
+        </h1>
+    </div>
+
+    <div class="py-5 bg-light">
+        <div class="container">
+            <div class="row">
+                <table class="table table-striped table-dark">
+                    <thead>
+                    <tr>
+                        <th scope="col">#</th>
+                        <th scope="col">Prénom et Nom</th>
+                        <th scope="col">Email</th>
+                        <th scope="col">Téléphone</th>
+                        <th scope="col">Message</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for message in messages %}
+                        <tr>
+                            <th scope="row">{{ message.id }}</th>
+                            <td>{{ message.firstname ~ ' ' ~ message.lastname }}</td>
+                            <td>{{ message.email }}</td>
+                            <td>{{ message.telephone }}</td>
+                            <td>{{ message.description }}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div> <!-- /.row -->
+        </div> <!-- /.container -->
+    </div> <!-- /.bg-light -->
+
+{% endblock %}
+
