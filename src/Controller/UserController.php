@@ -10,9 +10,11 @@ use Symfony\Component\Form\Extension\Core\Type\EmailType;
 use Symfony\Component\Form\Extension\Core\Type\PasswordType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
 
 /**
  * Class UserController
@@ -25,8 +27,11 @@ class UserController extends  AbstractController
      * Page d'Inscription
      * @Route("/inscription.html", name="user_register", methods={"GET|POST"})
      * @param Request $request
+     * @param UserPasswordEncoderInterface $encoder
+     * @return RedirectResponse|Response
+     * @throws \Exception
      */
-    public function register(Request $request)
+    public function register(Request $request, UserPasswordEncoderInterface $encoder)
     {
         # Creation d'un nouveau user
         $user = new User();
@@ -78,6 +83,14 @@ class UserController extends  AbstractController
         # Si le formulaire est soumi et si il est valide
         if ( $form->isSubmitted() && $form->isValid() ) {
 
+            # Encodage du Mot de Passe
+            $user->setPassword(
+                $encoder->encodePassword(
+                    $user,
+                    $user->getPassword()
+                )
+            );
+
             # Enregistrement dans la BDD
             $em = $this->getDoctrine()->getManager();
             $em->persist($user);
@@ -87,22 +100,12 @@ class UserController extends  AbstractController
             $this->addFlash('notice', 'Inscription réussi !');
 
             # Redirection
-            return $this->redirectToRoute('user_login');        }
+            return $this->redirectToRoute('security_login');        }
 
 
 
         return $this->render('user/inscription.html.twig',[
             'form' => $form ->createView()
         ]);
-    }
-   
-
-    /**
-     * Page de Connexion
-     * * @Route("/connexion.html", name="user_login", methods={"GET|POST"})
-     */
-    public function login()
-    {
-        return new Response("<h1>PAGE CONNEXION</h1>");
     }
 }

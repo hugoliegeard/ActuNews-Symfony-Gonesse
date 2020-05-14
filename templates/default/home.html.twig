@@ -4,13 +4,51 @@
     Accueil | ActuNews
 {% endblock %}
 
+{% block stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="https://unpkg.com/simpleslider-js@1.9.0/dist/simpleSlider.min.css"/>
+    <style>
+        .simple-slider-first {
+            height: 450px;
+        }
+    </style>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script src="https://unpkg.com/simpleslider-js@1.9.0/dist/simpleSlider.min.js"></script>
+    <script>
+        new SimpleSlider('.simple-slider-first');
+    </script>
+{% endblock %}
+
 {% block content %}
     <div class="p-3 mx-auto text-center">
         <h1 class="display-4">ActuNews</h1>
     </div>
 
+    <div class="simple-slider simple-slider-first">
+        <div class="slider-wrapper">
+            {% for article in articles %}
+                <div class="slider-slide" style="background-image: url('{{ asset('images/articles/' ~ article.image) }}')"></div>
+            {% endfor %}
+        </div>
+
+        <!--Pagination (Not required)-->
+        <div class="slider-pagination"></div>
+
+        <!-- Buttons (Not required) -->
+        <div class="slider-btn slider-btn-prev"></div>
+        <div class="slider-btn slider-btn-next"></div>
+    </div>
+
     <div class="py-5 bg-light">
         <div class="container">
+            <div class="row">
+                <div class="col">
+
+                </div>
+            </div>
             <div class="row">
                 {% for article in articles %}
                     <div class="col-md-4 mt-4">

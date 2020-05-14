@@ -7,6 +7,7 @@ namespace App\Controller;
 use App\Entity\Article;
 use App\Entity\Category;
 use App\Entity\User;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Form\Extension\Core\Type\FileType;
@@ -79,6 +80,8 @@ class ArticleController extends AbstractController
      * @Route("/rediger-un-article.html",
      *     name="article_new",
      *     methods={"GET|POST"})
+     * @IsGranted("ROLE_AUTHOR",
+     *     message="Vous n'avez pas les permissions nécessaires.")
      * @param Request $request
      * @return Response
      * @throws \Exception

@@ -7,6 +7,7 @@ namespace App\Controller;
 use App\Entity\Article;
 use App\Entity\Category;
 use App\Entity\Contact;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Form\Extension\Core\Type\EmailType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
@@ -28,7 +29,7 @@ class DefaultController extends AbstractController
         # Récupération de tous les articles
         $articles = $this->getDoctrine()
             ->getRepository(Article::class)
-            ->findAll();
+            ->findLastArticles();
 
         # Transmission à la vue
         return $this->render('default/home.html.twig', [
@@ -171,9 +172,11 @@ class DefaultController extends AbstractController
     }
 
     /**
-     * @Route("/gestion-contact.html", name="default_gestion",   methods={"GET"})          )
+     * @Route("/gestion-contact.html", name="default_messagerie", methods={"GET"})
+     * @IsGranted("ROLE_ADMIN",
+     *     message="Vous n'avez pas les permissions nécessaires.")
      */
-    public function message()
+    public function messagerie()
     {
         # Récupération des messages
         $messages = $this->getDoctrine()
