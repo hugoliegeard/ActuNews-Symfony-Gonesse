@@ -19,6 +19,8 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Workflow\Exception\LogicException;
+use Symfony\Component\Workflow\Registry;
 
 class ArticleController extends AbstractController
 {
@@ -83,21 +85,20 @@ class ArticleController extends AbstractController
      * @IsGranted("ROLE_AUTHOR",
      *     message="Vous n'avez pas les permissions nécessaires.")
      * @param Request $request
+     * @param Registry $registry
      * @return Response
-     * @throws \Exception
      */
-    public function addArticle(Request $request)
+    public function addArticle(Request $request, Registry $registry)
     {
         # Création d'un nouvel article
         $article = new Article();
 
-        # Je récupère un user dans la base
-        # TODO : Récupérer le user en session
-        $auteur = $this->getDoctrine()
-            ->getRepository(User::class)
-            ->find(1);
+        # Récupération du Workflow
+        $workflow = $registry->get($article);
+        # dd($workflow->getEnabledTransitions($article));
 
-        $article->setUser($auteur);
+        # Je récupère un user dans la base
+        $article->setUser($this->getUser());
         $article->setCreatedDate(new \DateTimeImmutable());
 
         # Création du Formulaire
@@ -179,21 +180,34 @@ class ArticleController extends AbstractController
                 )
             );
 
-            # Sauvegarde en BDD
-            $em = $this->getDoctrine()->getManager();
-            $em->persist($article);
-            $em->flush();
+            try {
 
-            # Notification
-            $this->addFlash('notice',
-                'Félicitation, votre article est en ligne !');
+                # Appliquer le Workflow
+                $workflow->apply($article, 'to_review');
 
-            # Redirection
-            return $this->redirectToRoute('default_article', [
-                'category' => $article->getCategory()->getAlias(),
-                'alias' => $article->getAlias(),
-                'id' => $article->getId()
-            ]);
+                # Sauvegarde en BDD
+                $em = $this->getDoctrine()->getManager();
+                $em->persist($article);
+                $em->flush();
+
+                # Notification
+                $this->addFlash('notice',
+                    'Félicitation, votre article est en ligne !');
+
+                # Redirection
+                return $this->redirectToRoute('default_article', [
+                    'category' => $article->getCategory()->getAlias(),
+                    'alias' => $article->getAlias(),
+                    'id' => $article->getId()
+                ]);
+
+            } catch (LogicException $e) {
+
+                # Transition non autorisé...
+                $this->addFlash('danger',
+                    "Révision impossible, contactez le rédacteur.");
+
+            }
         }
 
         # On passe le formulaire à la vue
@@ -201,4 +215,84 @@ class ArticleController extends AbstractController
             'form' => $form->createView()
         ]);
     }
+
+    /**
+     * Permet de lister les articles d'un auteur en attente
+     * @Route("/mes-articles/en-attente", name="article_awaiting", methods={"GET"})
+     * @IsGranted("ROLE_AUTHOR")
+     */
+    public function awaitingArticles()
+    {
+        # Récupération de l'auteur en session
+        $author = $this->getUser();
+
+        # Récupérer les articles de l'auteur en "review"
+        $articles = $this->getDoctrine()
+            ->getRepository(Article::class)
+            ->findByAuthorAndStatus($author->getId(), 'review');
+
+        return $this->render('article/articles.html.twig', [
+           'title' => 'Mes articles en attente',
+           'articles' => $articles
+        ]);
+
+    }
+
+    /**
+     * Permet de lister les articles d'un auteur en attente
+     * @Route("/les-articles/en-attente-de-validation", name="article_to_approval", methods={"GET"})
+     * @IsGranted("ROLE_EDITOR")
+     */
+    public function toApprovalArticles()
+    {
+        # Récupérer les articles de l'auteur en "review"
+        $articles = $this->getDoctrine()
+            ->getRepository(Article::class)
+            ->findByStatus('editor');
+
+        return $this->render('article/articles.html.twig', [
+            'title' => 'Les articles en attente de validation',
+            'articles' => $articles
+        ]);
+
+    }
+
+    /**
+     * Permet de lister les articles d'un auteur en attente
+     * @Route("/les-articles/en-attente-de-correction", name="article_to_corrector", methods={"GET"})
+     * @IsGranted("ROLE_CORRECTOR")
+     */
+    public function toCorrectorArticles()
+    {
+        # Récupérer les articles de l'auteur en "review"
+        $articles = $this->getDoctrine()
+            ->getRepository(Article::class)
+            ->findByStatus('corrector');
+
+        return $this->render('article/articles.html.twig', [
+            'title' => 'Les articles en attente de correction',
+            'articles' => $articles
+        ]);
+
+    }
+
+    /**
+     * Permet de lister les articles d'un auteur en attente
+     * @Route("/les-articles/en-attente-de-publication", name="article_to_publication", methods={"GET"})
+     * @IsGranted("ROLE_PUBLISHER")
+     */
+    public function toPublisherArticles()
+    {
+        # Récupérer les articles de l'auteur en "review"
+        $articles = $this->getDoctrine()
+            ->getRepository(Article::class)
+            ->findByStatus('publisher');
+
+        return $this->render('article/articles.html.twig', [
+            'title' => 'Les articles en attente de publication',
+            'articles' => $articles
+        ]);
+
+    }
+
 }

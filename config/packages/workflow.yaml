@@ -1,0 +1,53 @@
+framework:
+    workflows:
+        article_publishing:
+            type: 'workflow'
+            audit_trail:
+                enabled: true
+            marking_store:
+                type: 'method'
+                property: 'status'
+            supports:
+                - App\Entity\Article
+            initial_marking: draft
+            places:
+                - draft
+                - review
+                - editor
+                - corrector
+                - correction_ok
+                - publisher
+                - publisher_ok
+                - published
+                - rejected
+            transitions:
+                to_review:
+                    from: draft
+                    to:   review
+                to_approval:
+                    from: review
+                    to: editor
+                editor_ok:
+                    from: editor
+                    to: [corrector, publisher]
+                editor_fail:
+                    from: editor
+                    to: review
+                editor_refused:
+                    from: editor
+                    to: rejected
+                corr_approuved:
+                    from: corrector
+                    to: correction_ok
+                corr_failure:
+                    from: corrector
+                    to: editor
+                pub_approuved:
+                    from: publisher
+                    to: publisher_ok
+                pub_failure:
+                    from: publisher
+                    to: editor
+                to_be_published:
+                    from: [publisher_ok, correction_ok]
+                    to: published

@@ -31,6 +31,19 @@
                         </a>
                         <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
                             <a class="dropdown-item" href="{{ path("article_new") }}">Créer un Article</a>
+                            <a class="dropdown-item" href="{{ path("article_awaiting") }}">Mes Article en Attente</a>
+                            {% if is_granted('ROLE_EDITOR') %}
+                                <a class="dropdown-item" href="{{ path("article_to_approval") }}">Articles à Valider</a>
+                            {% endif %}
+
+                            {% if is_granted('ROLE_CORRECTOR') %}
+                                <a class="dropdown-item" href="{{ path("article_to_corrector") }}">Articles à Corriger</a>
+                            {% endif %}
+
+                            {% if is_granted('ROLE_PUBLISHER') %}
+                                <a class="dropdown-item" href="{{ path("article_to_publication") }}">Articles à Publier</a>
+                            {% endif %}
+
                             {% if is_granted('ROLE_ADMIN') %}
                                 <a class="dropdown-item" href="{{ path("default_messagerie") }}">Messagerie</a>
                             {% endif %}

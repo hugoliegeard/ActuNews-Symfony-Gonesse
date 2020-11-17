@@ -34,15 +34,25 @@ class ArticleRepository extends ServiceEntityRepository
         ;
     }
 
-    /*
-    public function findOneBySomeField($value): ?Article
+    public function findByAuthorAndStatus($authorId, $status)
     {
         return $this->createQueryBuilder('a')
-            ->andWhere('a.exampleField = :val')
-            ->setParameter('val', $value)
+            ->where('a.user = :user_id')
+            ->setParameter('user_id', $authorId)
+            ->andWhere('a.status LIKE :status')
+            ->setParameter('status', "%$status%")
+            ->orderBy('a.id', 'DESC')
             ->getQuery()
-            ->getOneOrNullResult()
-        ;
+            ->getResult();
     }
-    */
+
+    public function findByStatus($status)
+    {
+        return $this->createQueryBuilder('a')
+            ->where('a.status LIKE :status')
+            ->setParameter('status', "%$status%")
+            ->orderBy('a.id', 'DESC')
+            ->getQuery()
+            ->getResult();
+    }
 }

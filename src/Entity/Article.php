@@ -61,6 +61,11 @@ class Article
      */
     private $user;
 
+    /**
+     * @ORM\Column(type="array")
+     */
+    private $status = [];
+
     public function getId(): ?int
     {
         return $this->id;
@@ -146,6 +151,18 @@ class Article
     public function setUser(?User $user): self
     {
         $this->user = $user;
+
+        return $this;
+    }
+
+    public function getStatus(): ?array
+    {
+        return $this->status;
+    }
+
+    public function setStatus(array $status): self
+    {
+        $this->status = $status;
 
         return $this;
     }
